@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>YouTube Music Player - Ascolta musica efficiente</title>
+  <meta name="description" content="Player YouTube ottimizzato per ascoltare musica con controlli avanzati, playlist e tema scuro" />
+  
+  <style>
+    :root {
+      --background: 222.2 84% 4.9%;
+      --foreground: 210 40% 98%;
+      --card: 222.2 84% 4.9%;
+      --card-foreground: 210 40% 98%;
+      --popover: 222.2 84% 4.9%;
+      --popover-foreground: 210 40% 98%;
+      --primary: 263 70% 50.4%;
+      --primary-foreground: 210 40% 98%;
+      --secondary: 217.2 32.6% 17.5%;
+      --secondary-foreground: 210 40% 98%;
+      --muted: 217.2 32.6% 17.5%;
+      --muted-foreground: 215 20.2% 65.1%;
+      --accent: 217.2 32.6% 17.5%;
+      --accent-foreground: 210 40% 98%;
+      --destructive: 0 62.8% 30.6%;
+      --destructive-foreground: 210 40% 98%;
+      --border: 217.2 32.6% 17.5%;
+      --input: 217.2 32.6% 17.5%;
+      --ring: 263 70% 50.4%;
+      --radius: 0.75rem;
+      --player-gradient: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(280 100% 70%) 100%);
+      --player-glow: 0 0 40px hsl(var(--primary) / 0.3);
+      --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .title {
+      font-size: 3rem;
+      font-weight: 700;
+      background: var(--player-gradient);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0 0 1rem 0;
+    }
+
+    .subtitle {
+      color: hsl(var(--muted-foreground));
+      font-size: 1.125rem;
+      margin: 0;
+    }
+
+    .playlist-info {
+      color: hsl(var(--muted-foreground));
+      font-size: 1rem;
+      margin-top: 1rem;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .player-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .player-card {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-elegant);
+    }
+
+    .player-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+    }
+
+    .controls-card {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-elegant);
+    }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .control-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      border: none;
+      cursor: pointer;
+      font-size: 1.25rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px hsl(var(--primary) / 0.3);
+    }
+
+    .control-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px hsl(var(--primary) / 0.4);
+    }
+
+    .control-button.secondary {
+      background: hsl(var(--secondary));
+      color: hsl(var(--secondary-foreground));
+      box-shadow: 0 2px 8px hsl(var(--secondary) / 0.3);
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .slider {
+      flex: 1;
+      height: 6px;
+      background: hsl(var(--muted));
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+      -webkit-appearance: none;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: hsl(var(--primary));
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      background: hsl(var(--primary));
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+    }
+
+    .time-display {
+      text-align: center;
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .playlist-section {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-elegant);
+      display: flex;
+      flex-direction: column;
+      height: fit-content;
+    }
+
+    .url-input-container {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .url-input {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      background: hsl(var(--input));
+      border: 1px solid hsl(var(--border));
+      border-radius: 0.5rem;
+      color: hsl(var(--foreground));
+      font-size: 1rem;
+    }
+
+    .url-input::placeholder {
+      color: hsl(var(--muted-foreground));
+    }
+
+    .load-button {
+      padding: 0.75rem 1.5rem;
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .load-button:hover {
+      background: hsl(var(--primary) / 0.9);
+    }
+
+    .playlist-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .pages-container {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .page-button {
+      padding: 0.5rem 1rem;
+      background: hsl(var(--secondary));
+      color: hsl(var(--secondary-foreground));
+      border: 1px solid hsl(var(--border));
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+    }
+
+    .page-button:hover {
+      background: hsl(var(--accent));
+    }
+
+    .tracks-list {
+      max-height: 500px;
+      overflow-y: auto;
+      border: 1px solid hsl(var(--border));
+      border-radius: 0.5rem;
+      background: hsl(var(--muted) / 0.3);
+    }
+
+    .track-item {
+      padding: 1rem;
+      cursor: pointer;
+      border-bottom: 1px solid hsl(var(--border));
+      transition: all 0.2s ease;
+      color: hsl(var(--foreground));
+    }
+
+    .track-item:hover {
+      background: hsl(var(--accent));
+    }
+
+    .track-item.active {
+      background: hsl(var(--primary) / 0.2);
+      color: hsl(var(--primary-foreground));
+      border-left: 4px solid hsl(var(--primary));
+    }
+
+    .track-item:last-child {
+      border-bottom: none;
+    }
+
+    .volume-label {
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
+      min-width: 3rem;
+    }
+
+    @media (max-width: 1024px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+      
+      .title {
+        font-size: 2.5rem;
+      }
+      
+      .container {
+        padding: 1rem;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .controls-row {
+        gap: 0.75rem;
+      }
+      
+      .control-button {
+        width: 2.5rem;
+        height: 2.5rem;
+        font-size: 1rem;
+      }
+      
+      .url-input-container {
+        flex-direction: column;
+      }
+      
+      .title {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 class="title">YouTube Music Player</h1>
+      <p class="subtitle">Ascolta la tua musica preferita da YouTube in modo efficiente</p>
+      <div id="playlistInfo" class="playlist-info"></div>
+    </div>
+
+    <div class="main-grid">
+      <!-- Left Column - Player & Controls -->
+      <div class="player-section">
+        <div class="player-card">
+          <div class="player-wrapper">
+            <div id="player"></div>
+          </div>
+        </div>
+        
+        <div class="controls-card">
+          <div class="controls-row">
+            <button id="btnPrev" class="control-button secondary">⏮</button>
+            <button id="btnPlay" class="control-button">▶️</button>
+            <button id="btnNext" class="control-button secondary">⏭</button>
+            <button id="btnRepeat" class="control-button secondary">🔁</button>
+            <button id="btnShuffle" class="control-button secondary">🔀</button>
+          </div>
+          
+          <div class="slider-container">
+            <span style="font-size: 0.875rem; color: hsl(var(--muted-foreground)); min-width: 3rem;">Tempo</span>
+            <input id="seek" type="range" min="0" max="100" value="0" class="slider">
+          </div>
+          
+          <div class="slider-container">
+            <span style="font-size: 0.875rem; color: hsl(var(--muted-foreground)); min-width: 3rem;">Volume</span>
+            <input id="vol" type="range" min="0" max="100" value="75" class="slider">
+            <span id="volLabel" class="volume-label">75%</span>
+          </div>
+          
+          <div id="timeLabel" class="time-display">0:00 / 0:00</div>
+        </div>
+      </div>
+
+      <!-- Right Column - Playlist -->
+      <div class="playlist-section">
+        <div class="url-input-container">
+          <input id="playlistUrl" type="text" placeholder="Incolla l'URL della playlist YouTube..." class="url-input">
+          <button id="loadBtn" class="load-button">Carica Playlist</button>
+        </div>
+        
+        <div id="playlistTitle" class="playlist-title"></div>
+        <div id="pages" class="pages-container"></div>
+        <div id="tracksList" class="tracks-list"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const API_KEY = 'AIzaSyDDvrky0zFKo-Vs_HY5DaaVTrlXL397wz4';
+const MAX_RESULTS = 50;
+
+let playlistId = null;
+let player = null;
+let pageCache = {};
+let pageTokens = [];
+let totalResults = 0;
+
+// Estrae ID playlist
+function extractPlaylistId(str) {
+  try {
+    const u = new URL(str);
+    return u.searchParams.get('list');
+  } catch(e){}
+  const m = str.match(/list=([A-Za-z0-9_-]+)/);
+  return m ? m[1] : null;
+}
+
+// Fetch pagina
+async function fetchPage(pageToken='') {
+  const url = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
+  url.searchParams.set('part','snippet');
+  url.searchParams.set('playlistId', playlistId);
+  url.searchParams.set('maxResults', MAX_RESULTS);
+  url.searchParams.set('key', API_KEY);
+  if(pageToken) url.searchParams.set('pageToken', pageToken);
+  const res = await fetch(url);
+  return res.json();
+}
+
+// Fetch titolo playlist
+async function fetchPlaylistTitle() {
+  const url = new URL('https://www.googleapis.com/youtube/v3/playlists');
+  url.searchParams.set('part','snippet');
+  url.searchParams.set('id', playlistId);
+  url.searchParams.set('key', API_KEY);
+  const res = await fetch(url);
+  const d = await res.json();
+  return (d.items && d.items[0] && d.items[0].snippet.title) || '';
+}
+
+// Carica playlist (solo prima pagina)
+async function loadPlaylist() {
+  playlistId = extractPlaylistId(document.getElementById('playlistUrl').value.trim());
+  if(!playlistId) return alert('Playlist non valida');
+
+  pageCache = {};
+  pageTokens = [];
+  document.getElementById('tracksList').innerHTML = '';
+  document.getElementById('pages').innerHTML = 'Caricamento...';
+  document.getElementById('playlistTitle').textContent = '';
+  document.getElementById('playlistInfo').textContent = '';
+
+  const first = await fetchPage();
+  if(!first.items || !first.items.length) return alert('Playlist vuota');
+
+  pageCache[''] = first.items;
+  totalResults = first.pageInfo.totalResults || first.items.length;
+  if(first.nextPageToken) pageTokens[0] = first.nextPageToken;
+
+  let title = await fetchPlaylistTitle();
+  if(title.length > 60) title = title.substring(0,60) + '…';
+  document.getElementById('playlistTitle').textContent = title;
+  document.getElementById('playlistInfo').textContent = 'Totale brani: ' + totalResults;
+
+  renderPages();
+  showPage('');
+}
+
+// Bottoni pagine
+function renderPages() {
+  const p = document.getElementById('pages');
+  p.innerHTML = '';
+  const totalPages = Math.ceil(totalResults / MAX_RESULTS);
+  for(let i=0; i<totalPages; i++) {
+    const b = document.createElement('button');
+    b.className = 'page-button';
+    b.textContent = i+1;
+    b.onclick = ()=> showPageByIndex(i);
+    p.appendChild(b);
+  }
+}
+
+// Mostra pagina per indice
+async function showPageByIndex(index) {
+  let token = '';
+  if(index === 0) {
+    token = '';
+  } else {
+    token = pageTokens[index-1];
+    if(!pageCache[token]) {
+      document.getElementById('tracksList').innerHTML =
+        '<div class="track-item">⏳ Caricamento pagina '+(index+1)+'...</div>';
+      const d = await fetchPage(token);
+      pageCache[token] = d.items || [];
+      if(d.nextPageToken) {
+        pageTokens[index] = d.nextPageToken;
+      }
+    }
+  }
+  showPage(token);
+}
+
+// Mostra i brani di una pagina
+function showPage(token) {
+  const list = document.getElementById('tracksList');
+  list.innerHTML = '';
+  (pageCache[token]||[]).forEach((it,idx)=>{
+    const vid = it.snippet.resourceId.videoId;
+    const div = document.createElement('div');
+    div.className = 'track-item';
+    div.textContent = it.snippet.title;
+    div.dataset.videoId = vid;
+    div.onclick = ()=> playVideo(vid, div);
+    list.appendChild(div);
+  });
+}
+
+// Riproduce un video
+function playVideo(id, el) {
+  document.querySelectorAll('.track-item').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  if(!player) {
+    player = new YT.Player('player', {
+      height: '100%',
+      width: '100%',
+      videoId: id,
+      playerVars: { controls:0, enablejsapi:1, origin: location.origin },
+      events: {
+        onReady: ()=> player.setPlaybackQuality('medium'), // 360p fisso
+        onError: e => { if([101,150,153].includes(e.data)) el.nextElementSibling?.click(); }
+      }
+    });
+  } else {
+    player.loadVideoById(id);
+    player.setPlaybackQuality('medium');
+  }
+}
+
+// Controlli base
+document.getElementById('btnPlay').onclick = ()=>{
+  if(!player) return;
+  const s = player.getPlayerState();
+  if(s===YT.PlayerState.PLAYING) {
+    player.pauseVideo();
+    document.getElementById('btnPlay').textContent = '▶️';
+  } else {
+    player.playVideo();
+    document.getElementById('btnPlay').textContent = '⏸';
+  }
+};
+document.getElementById('btnPrev').onclick = ()=>{
+  const active = document.querySelector('.track-item.active');
+  if(active && active.previousElementSibling) active.previousElementSibling.click();
+};
+document.getElementById('btnNext').onclick = ()=>{
+  const active = document.querySelector('.track-item.active');
+  if(active && active.nextElementSibling) active.nextElementSibling.click();
+};
+document.getElementById('vol').oninput = e=>{
+  if(player) player.setVolume(e.target.value);
+  document.getElementById('volLabel').textContent = e.target.value + '%';
+};
+document.getElementById('seek').oninput = e=>{
+  if(player) {
+    const d = player.getDuration();
+    player.seekTo(d * e.target.value/100, true);
+  }
+};
+
+setInterval(()=>{
+  try {
+    if(player) {
+      const c = player.getCurrentTime(),
+            d = player.getDuration();
+      document.getElementById('seek').value = d? c/d*100 : 0;
+      document.getElementById('timeLabel').textContent =
+        `${Math.floor(c/60)}:${String(Math.floor(c%60)).padStart(2,'0')} / ${Math.floor(d/60)}:${String(Math.floor(d%60)).padStart(2,'0')}`;
+    }
+  } catch {}
+}, 500);
+
+// Bottone Carica
+document.getElementById('loadBtn').onclick = loadPlaylist;
+
+// Carica API YouTube
+(function(){
+  const tag = document.createElement('script');
+  tag.src = "https://www.youtube.com/iframe_api";
+  document.body.appendChild(tag);
+})();
+</script>
+</body>
+</html>
