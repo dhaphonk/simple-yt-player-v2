@@ -850,13 +850,7 @@
                 
             } catch (error) {
                 console.error('Errore API:', error);
-                showToast('Impossibile caricare la playlist. Verifica il link e la chiave API.', 'error');
-            } finally {
-                // Hide loading state
-                searchIcon.style.display = 'block';
-                loadingSpinner.style.display = 'none';
-                loadBtn.disabled = false;
-            }
+               
         }
 
         // Funzione per convertire durata YouTube ISO 8601 in formato leggibile
